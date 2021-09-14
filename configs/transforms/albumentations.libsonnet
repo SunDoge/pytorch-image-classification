@@ -34,4 +34,15 @@ local A(name) = 'albumentations.%s' % name;
     height: height,
     width: width,
   },
+  PadIfNeeded(min_height, min_width):: {
+    _name: A('PadIfNeeded'),
+    min_height: min_height,
+    min_width: min_width,
+    border_mode: 0,  // cv2.BORDER_CONSTANT
+  },
+  RandomCrop(height, width):: {
+    _name: A('RandomCrop'),
+    height: height,
+    width: width,
+  },
 }
