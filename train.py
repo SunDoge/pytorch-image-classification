@@ -1,11 +1,27 @@
-from flame.next_version.config_parser import ConfigParser
-from flame.next_version.config import from_file
+from flame.next_version.arguments import BaseArgs
+from dataclasses import dataclass
+from flame.next_version.distributed_training import start_distributed_training
 from icecream import ic
+import logging
 
-cp = ConfigParser()
+_logger = logging.getLogger(__name__)
 
-config = from_file('configs/000.jsonnet')
 
-composed = cp.parse(config['train_transform'])
+@dataclass
+class Args(BaseArgs):
+    pass
 
-ic(composed)
+
+def main_worker(args: Args):
+    _logger.info('this is main worker')
+
+
+def main():
+
+    args = Args.from_args()
+    ic(args)
+    start_distributed_training(args)
+
+
+if __name__ == '__main__':
+    main()

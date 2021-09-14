@@ -2,5 +2,5 @@
 local transform = import './transforms/imagenet.libsonnet';
 
 {
-  train_transform: transform.supervised.train(),
+  engine: 'lib.engines.supervised_engine.Engine',
 }
