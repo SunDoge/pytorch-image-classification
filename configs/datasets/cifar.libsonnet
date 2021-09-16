@@ -5,8 +5,9 @@
     train: train,  // bool,
     transform: null,
     download: download,
+    num_classes:: 10,
   },
   cifar100: {
-
+    num_classes:: 100,
   },
 }

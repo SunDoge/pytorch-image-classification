@@ -4,10 +4,10 @@ local models = import './models/cifar_resnet.libsonnet';
 local optimizers = import './optimizers.libsonnet';
 local trans = import './transforms/cifar.libsonnet';
 {
-  engine: 'lib.engines.supervised_engine.Engine',
+  main_worker: 'lib.engines.supervised_engine.Engine',
   max_epochs: 10,
 
-  model: models.cifar_resnet20(),
+  model: models.cifar_resnet20(self.train.dataset.num_classes),
   optimizer: optimizers.SGD(0.1),
 
 
