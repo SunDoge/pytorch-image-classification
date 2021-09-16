@@ -19,8 +19,8 @@ def main_worker(args: Args):
 def main():
 
     args = Args.from_args()
-    ic(args)
-    start_distributed_training(args)
+    ic(args.parse_config())
+    # start_distributed_training(args)
 
 
 if __name__ == '__main__':

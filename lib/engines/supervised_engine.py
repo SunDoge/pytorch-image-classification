@@ -1,5 +1,7 @@
-from flame.next_version.engine import BaseEngine, BaseModule, DataModule
+from flame.next_version.engine import BaseEngine, BaseModule, BaseState, DataModule
 import logging
+from flame.next_version.symbols import IConfig
+from injector import inject
 
 _logger = logging.getLogger(__name__)
 
@@ -9,19 +11,16 @@ class MyModule(BaseModule):
     pass
 
 
+@inject
 class Engine(BaseEngine):
 
-    # ProviderModule = BaseModule
+    ProviderModule = MyModule
     # class ProviderModule(BaseModule):
     #     pass
 
     def __init__(
-        self
+        self,
+        config: IConfig
     ) -> None:
-        super().__init__()
-
-    def run(self, data_module: DataModule):
-        
-        for data in data_module.train_loader:
-            _logger.info(data)
-            break
+        super().__init__(config)
+        _logger.info(config)
