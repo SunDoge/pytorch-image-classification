@@ -1,6 +1,6 @@
 {
   setlr(lr):: {
-    optimizer+: {
+    optimizer_config+: {
       lr: lr,
     },
   },
