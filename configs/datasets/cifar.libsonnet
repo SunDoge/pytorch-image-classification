@@ -3,7 +3,7 @@
     _name: 'lib.datasets.cifar.Cifar10',
     root: root,
     train: train,  // bool,
-    transform: null,
+    transform: '$transform',
     download: download,
     num_classes:: 10,
   },

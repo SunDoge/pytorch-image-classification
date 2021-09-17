@@ -19,7 +19,7 @@ local trans = import './transforms/cifar.libsonnet';
     ),
     loader: {
       _name: 'flame.pytorch.helpers.create_data_loader',
-      dataset: null,
+      dataset: '$dataset',
       num_workers: 2,
       batch_size: 128,
     },
@@ -32,7 +32,7 @@ local trans = import './transforms/cifar.libsonnet';
     ),
     loader: {
       _name: 'flame.pytorch.helpers.create_data_loader',
-      dataset: null,
+      dataset: '$dataset',
       num_workers: 2,
       batch_size: 128,
     },
