@@ -13,6 +13,7 @@ from torch import nn
 import torch
 from flame.pytorch.metrics.functional import topk_accuracy
 from flame.next_version.helpers.tensorboard import Rank0SummaryWriter
+from flame.next_version.helpers.checkpoint_saver import LatestCheckpointSaver, BestCheckpointSaver
 
 _logger = logging.getLogger(__name__)
 
@@ -41,6 +42,7 @@ class State(BaseState):
         self.optimizer = optimizer
         self.device = device
         self.criterion = criterion
+        self.best_acc1 = 0.
 
     def get_batch_size(self, batch) -> int:
         return batch[1].size(0)
@@ -116,6 +118,9 @@ def validate(state: State, loader, print_freq: int):
             _logger.info(
                 f'Val {state.iter_eta}\t{meters}'
             )
+
+    meters.sync()
+    return meters['acc1'].avg
 
 
 def forward_model(state: State, batch: Tuple[Tensor, Tensor], batch_size: int, meters: DynamicAverageMeterGroup):
