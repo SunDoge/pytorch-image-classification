@@ -8,7 +8,7 @@ local trans = import './transforms/cifar.libsonnet';
 {
   local this = self,
   // main_worker: 'lib.engines.supervised_engine.Engine',
-  _name: 'lib.engines.supervised_engine.main_worker',
+  _name: 'lib.engines.supervised_engine.MainWorker',
   args: '$args',
   max_epochs: 200,
   print_freq: 10,
@@ -16,6 +16,9 @@ local trans = import './transforms/cifar.libsonnet';
   model_config: models.cifar_resnet20(self.train_config.dataset.num_classes),
   optimizer_config: optimizers.SGD(0.1),
   scheduler_config: schedulers.MultiStepLR,
+  criterion_config: {
+    _name: 'torch.nn.CrossEntropyLoss',
+  },
 
   train_config: {
     transform: trans.supervised.train,
