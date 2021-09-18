@@ -23,7 +23,7 @@ local trans = import './transforms/cifar.libsonnet';
   train_config: {
     transform: trans.supervised.train,
     dataset: ds.cifar10(
-      './data',
+      './data/cifar10',
       train=true,
     ),
     loader: {
@@ -37,7 +37,7 @@ local trans = import './transforms/cifar.libsonnet';
   val_config: {
     transform: trans.supervised.val,
     dataset: ds.cifar10(
-      './data',
+      './data/cifar10',
       train=false,
     ),
     loader: {
