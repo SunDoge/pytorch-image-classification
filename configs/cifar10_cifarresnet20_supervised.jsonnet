@@ -14,7 +14,7 @@ local trans = import './transforms/cifar.libsonnet';
   print_freq: 10,
 
   model_config: models.cifar_resnet20(self.train_config.dataset.num_classes),
-  optimizer_config: optimizers.SGD(0.1),
+  optimizer_config: optimizers.SGD(0.2),
   scheduler_config: schedulers.MultiStepLR,
   criterion_config: {
     _name: 'torch.nn.CrossEntropyLoss',

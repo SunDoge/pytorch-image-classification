@@ -44,7 +44,7 @@ class State(BaseState):
         self.optimizer = optimizer
         self.device = device
         self.criterion = criterion
-        self.best_acc1 = 0.
+        self.scheduler = scheduler
 
     def get_batch_size(self, batch) -> int:
         return batch[1].size(0)
@@ -64,7 +64,7 @@ class MainWorker:
         criterion_config: dict,
         scheduler_config: dict,
     ) -> None:
-        train_loader = helpers.create_data_loader_from_config(
+        train_loader: DataLoader = helpers.create_data_loader_from_config(
             train_config
         )
         val_loader = helpers.create_data_loader_from_config(
@@ -73,6 +73,14 @@ class MainWorker:
         model: nn.Module = helpers.create_model_from_config(
             model_config
         )
+
+        lr = optimizer_config['lr']
+        new_lr = helpers.scale_lr_linearly(
+            lr,
+            train_loader.batch_size,
+            world_size=args.world_size
+        )
+        optimizer_config['lr'] = new_lr
         optimizer: torch.optim.SGD = helpers.create_optimizer_from_config(
             optimizer_config, model.parameters()
         )
@@ -105,6 +113,8 @@ class MainWorker:
         for _ in state.epoch_wrapper(max_epochs):
             self.train(state, train_loader)
             self.validate(state, val_loader)
+
+            scheduler.step()
 
             best_acc1 = state.metrics.get('best_acc1', 0.)
             acc1 = state.metrics['acc1']
@@ -206,8 +216,6 @@ def main_worker(
         optimizer_config, model.parameters()
     )
     criterion = torch.nn.CrossEntropyLoss()
-    _logger.info(len(train_loader))
-    _logger.info(len(val_loader))
 
     state = State(
         model,
