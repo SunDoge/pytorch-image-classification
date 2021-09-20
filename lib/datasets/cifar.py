@@ -1,7 +1,8 @@
+from torch._C import _ImperativeEngine
 from torchvision.datasets import CIFAR10, CIFAR100
 
 
-def getitem(self: CIFAR10, index: int):
+def supervised_getitem(self: CIFAR10, index: int):
     img, target = self.data[index], self.targets[index]
 
     # doing this so that it is consistent with all other datasets
@@ -17,13 +18,26 @@ def getitem(self: CIFAR10, index: int):
     return img, target
 
 
+def unsupervised_getitem(self: CIFAR10, index: int):
+    img, target = self.data[index], self.targets[index]
+    # 要求transform输入一张图，输出多个view
+    views: list = self.transform(img)
+    return views, target
+
+
 class Cifar10(CIFAR10):
 
     def __getitem__(self, index: int):
-        return getitem(self, index)
+        return supervised_getitem(self, index)
 
 
 class Cifar100(CIFAR100):
 
     def __getitem__(self, index: int):
-        return getitem(self, index)
+        return supervised_getitem(self, index)
+
+
+class Cifar10Pair(CIFAR10):
+
+    def __getitem__(self, index: int):
+        return unsupervised_getitem(self, index)

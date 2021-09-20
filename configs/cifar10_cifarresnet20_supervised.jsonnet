@@ -6,15 +6,20 @@ local schedulers = import './schedulers.libsonnet';
 local trans = import './transforms/cifar.libsonnet';
 
 {
-  local this = self,
+  local root = self,
   // main_worker: 'lib.engines.supervised_engine.Engine',
-  _name: 'lib.engines.supervised_engine.MainWorker',
+  _name: 'lib.trainers.supervised.Trainer',
   args: '$args',
   max_epochs: 200,
   print_freq: 10,
+  learning_rate:: 0.2,
+  batch_size:: 128,
 
   model_config: models.cifar_resnet20(self.train_config.dataset.num_classes),
-  optimizer_config: optimizers.SGD(0.2),
+  optimizer_config: optimizers.SGD(
+    // normalize lr
+    root.learning_rate * root.batch_size / 256
+  ),
   scheduler_config: schedulers.MultiStepLR,
   criterion_config: {
     _name: 'torch.nn.CrossEntropyLoss',
@@ -29,8 +34,8 @@ local trans = import './transforms/cifar.libsonnet';
     loader: {
       _name: 'flame.pytorch.helpers.create_data_loader',
       dataset: '$dataset',
-      num_workers: 2,
-      batch_size: 128,
+      num_workers: 4,
+      batch_size: root.batch_size,
       // persistent_workers: false,
     },
   },
@@ -43,8 +48,8 @@ local trans = import './transforms/cifar.libsonnet';
     loader: {
       _name: 'flame.pytorch.helpers.create_data_loader',
       dataset: '$dataset',
-      num_workers: 2,
-      batch_size: 128,
+      num_workers: 4,
+      batch_size: root.batch_size * 2,
       // persistent_workers: false,
     },
   },

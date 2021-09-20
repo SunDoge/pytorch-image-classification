@@ -50,7 +50,7 @@ class State(BaseState):
         return batch[1].size(0)
 
 
-class MainWorker:
+class Trainer:
 
     def __init__(
         self,
@@ -73,14 +73,6 @@ class MainWorker:
         model: nn.Module = helpers.create_model_from_config(
             model_config
         )
-
-        lr = optimizer_config['lr']
-        new_lr = helpers.scale_lr_linearly(
-            lr,
-            train_loader.batch_size,
-            world_size=args.world_size
-        )
-        optimizer_config['lr'] = new_lr
         optimizer: torch.optim.SGD = helpers.create_optimizer_from_config(
             optimizer_config, model.parameters()
         )
@@ -125,6 +117,7 @@ class MainWorker:
             save_checkpoint(state.state_dict(),
                             args.experiment_dir, is_best=is_best)
 
+            _logger.info(state.metrics)
             _logger.info(state.epoch_eta)
 
             if args.debug:
