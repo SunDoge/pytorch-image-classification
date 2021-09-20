@@ -4,6 +4,10 @@
 
 初始化submodule
 ```bash
+git submodule update --init
+
+# or
+
 git submodule init
 git submodule update
 ```
