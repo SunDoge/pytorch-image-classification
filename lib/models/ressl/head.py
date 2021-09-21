@@ -5,7 +5,7 @@ import math
 
 
 class LinearHead(nn.Module):
-    def __init__(self, net, dim_in=2048, dim_out=1000):
+    def __init__(self, net: nn.Module, dim_in=2048, dim_out=1000):
         super().__init__()
         self.net = net
         self.fc = nn.Linear(dim_in, dim_out)

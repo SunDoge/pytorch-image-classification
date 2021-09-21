@@ -4,6 +4,7 @@ import torch.nn as nn
 # from network.head import *
 from .head import ProjectionHead
 import torch.nn.functional as F
+from torchvision.models.resnet import ResNet
 
 # backbone_dict = {
 #     'resnet18': resnet18,
@@ -19,7 +20,7 @@ import torch.nn.functional as F
 
 
 class BackBone(nn.Module):
-    def __init__(self, backbone: nn.Module, dim_in: int = 512, hidden_dim=4096, dim=512):
+    def __init__(self, backbone: ResNet, dim_in: int = 512, hidden_dim=4096, dim=512):
         super().__init__()
         self.net = backbone
         self.net.fc = nn.Identity()

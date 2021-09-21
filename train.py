@@ -11,8 +11,8 @@ _logger = logging.getLogger(__name__)
 
 @dataclass
 class Args(BaseArgs):
-    weights: Optional[str] = ta.add_argument(
-        '--weights', help='pretrain weights'
+    pretrained: Optional[str] = ta.add_argument(
+        '-p', '--pretrained', help='pretrained checkpoint'
     )
 
 

@@ -1,6 +1,6 @@
 // Train ResNet20 on CIFAR10
 local ds = import './datasets/cifar.libsonnet';
-local models = import './models/cifar_resnet.libsonnet';
+local models = import './models/ressl.libsonnet';
 local optimizers = import './optimizers.libsonnet';
 local schedulers = import './schedulers.libsonnet';
 local trans = import './transforms/cifar.libsonnet';
@@ -8,19 +8,20 @@ local trans = import './transforms/cifar.libsonnet';
 {
   local root = self,
   // main_worker: 'lib.engines.supervised_engine.Engine',
-  _name: 'lib.trainers.supervised.main_worker',
+  _name: 'lib.trainers.linear_eval.main_worker',
   args: '$args',
-  max_epochs: 200,
+  max_epochs: 100,
   print_freq: 10,
-  learning_rate:: 0.2,
-  batch_size:: 128,
+  learning_rate:: 30.0,
+  batch_size:: 256,
 
-  model_config: models.cifar_resnet20(self.train_config.dataset.num_classes),
+  model_config: models.cifar_resnet(),
   optimizer_config: optimizers.SGD(
     // normalize lr
-    root.learning_rate * root.batch_size / 256
+    root.learning_rate * root.batch_size / 256,
+    weight_decay=0
   ),
-  scheduler_config: schedulers.MultiStepLR(),
+  scheduler_config: schedulers.MultiStepLR([60, 80]),
   criterion_config: {
     _name: 'torch.nn.CrossEntropyLoss',
   },
