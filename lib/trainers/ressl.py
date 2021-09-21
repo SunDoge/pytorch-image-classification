@@ -1,10 +1,12 @@
+from flame.next_version.helpers import optimizer
 from os import stat
-from typing import Iterable, Tuple
+from typing import Iterable, List, Tuple
 import math
 
 from torch import Tensor
 import torch
 from torch import nn
+from torch.optim.optimizer import Optimizer
 from torch.utils.data.dataloader import DataLoader
 
 from flame.next_version.state import BaseState
@@ -23,11 +25,11 @@ _logger = logging.getLogger(__name__)
 class State(BaseState):
 
     def __init__(self,
-        model,
-        optimizer: torch.optim.SGD,
-        device,
-        criterion,
-    ) -> None:
+                 model,
+                 optimizer: torch.optim.SGD,
+                 device,
+                 criterion,
+                 ) -> None:
         super().__init__()
         self.model = model
         self.optimizer = optimizer
@@ -36,6 +38,7 @@ class State(BaseState):
 
     def get_batch_size(self, batch) -> int:
         return batch[1].size(0)
+
 
 class Trainer:
 
@@ -55,8 +58,24 @@ class Trainer:
         )
 
         model: nn.Module = helpers.create_model_from_config(model_config)
+
+        param_dict = {}
+        for k, v in model.named_parameters():
+            param_dict[k] = v
+
+        bn_params = [v for n, v in param_dict.items() if (
+            'bn' in n or 'bias' in n)]
+        rest_params = [v for n, v in param_dict.items() if not (
+            'bn' in n or 'bias' in n)]
+
+        params = [{'params': bn_params, 'weight_decay': 0, },
+                  {'params': rest_params, 'weight_decay': 1e-4}]
+
         optimizer: torch.optim.SGD = helpers.create_optimizer_from_config(
-            optimizer_config, model.parameters()
+            optimizer_config, params
+        )
+        base_lr = helpers.optimizer.get_learning_rate_from_optimizer(
+            optimizer
         )
 
         criterion = helpers.create_from_config(criterion_config)
@@ -79,6 +98,7 @@ class Trainer:
         self.max_epochs = max_epochs
         self.summary_writer = summary_writer
         self.args = args
+        self.base_lr = base_lr
 
         for _ in state.epoch_wrapper(max_epochs):
             self.train(state, train_loader)
@@ -97,7 +117,8 @@ class Trainer:
         state.train()
 
         for batch, batch_size in state.iter_wrapper(loader):
-            adjust_learning_rate(state, self.max_epochs)
+            adjust_learning_rate_by_state(state, self.base_lr, self.max_epochs)
+
             loss = forward_model(state, batch, batch_size, meters)
             state.optimizer.zero_grad()
             loss.backward()
@@ -123,11 +144,16 @@ class Trainer:
         self.summary_writer.add_scalar(
             f'{prefix}/loss', meters['loss'].avg, state.epoch
         )
-    
+        lr = helpers.optimizer.get_learning_rate_from_optimizer(
+            state.optimizer)
+        self.summary_writer.add_scalar(
+            f'{prefix}/lr', lr, state.epoch
+        )
+
     pass
 
 
-def forward_model(state: State, batch: Tuple[Tensor, Tensor], batch_size: int, meters: DynamicAverageMeterGroup):
+def forward_model(state: State, batch: Tuple[List[Tensor], Tensor], batch_size: int, meters: DynamicAverageMeterGroup):
     [img1, img2], _ = batch
     img1 = img1.to(state.device, non_blocking=True)
     img2 = img2.to(state.device, non_blocking=True)
@@ -139,19 +165,31 @@ def forward_model(state: State, batch: Tuple[Tensor, Tensor], batch_size: int, m
 
     return loss
 
-def adjust_learning_rate(state:State,  epochs, warm_up=5):
-    base_lr = helpers.optimizer.get_learning_rate_from_optimizer(state.optimizer)
-    iteration_per_epoch = state.epoch_length
 
-    T = state.epoch * iteration_per_epoch + state.batch_idx
+def adjust_learning_rate_by_state(state: State, base_lr: float, max_epochs: int):
+    adjust_learning_rate(
+        state.optimizer,
+        state.epoch,
+        base_lr,
+        state.batch_idx,
+        state.epoch_length,
+        max_epochs,
+        warm_up=5,
+    )
+    # lr = helpers.optimizer.get_learning_rate_from_optimizer(state.optimizer)
+
+
+def adjust_learning_rate(optimizer: Optimizer, epoch, base_lr, i, iteration_per_epoch, max_epochs: int, warm_up: int = 5):
+    epochs = max_epochs
+    T = epoch * iteration_per_epoch + i
     warmup_iters = warm_up * iteration_per_epoch
     total_iters = (epochs - warm_up) * iteration_per_epoch
 
-    if state.epoch < warm_up:
+    if epoch < warm_up:
         lr = base_lr * 1.0 * T / warmup_iters
     else:
         T = T - warmup_iters
         lr = 0.5 * base_lr * (1 + math.cos(1.0 * T / total_iters * math.pi))
-    
-    for param_group in state.optimizer.param_groups:
+
+    for param_group in optimizer.param_groups:
         param_group['lr'] = lr

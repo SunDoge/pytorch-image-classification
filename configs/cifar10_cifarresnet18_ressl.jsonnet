@@ -11,8 +11,8 @@ local optimizers = import './optimizers.libsonnet';
 
   max_epochs: 200,
   print_freq: 50,
-  learning_rate:: 0.2,
-  batch_size:: 128,
+  learning_rate:: 0.06,
+  batch_size:: 256,
 
   model_config: model.small_ressl,
 
@@ -22,8 +22,8 @@ local optimizers = import './optimizers.libsonnet';
   ),
   criterion_config: {
     _name: 'lib.losses.ressl.ResslLoss',
-    T_student: 0.04,
-    T_teacher: 0.1,
+    T_student: 0.1,
+    T_teacher: 0.04,
   },
 
   train_config: {
@@ -39,6 +39,7 @@ local optimizers = import './optimizers.libsonnet';
       dataset: '$dataset',
       num_workers: 4,
       batch_size: root.batch_size,
+      drop_last: true,
       // persistent_workers: false,
     },
   },

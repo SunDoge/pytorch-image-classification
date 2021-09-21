@@ -33,7 +33,7 @@ class State(BaseState):
 
     def __init__(
         self,
-        model,
+        model: nn.Module,
         optimizer: torch.optim.SGD,
         scheduler: torch.optim.lr_scheduler.MultiStepLR,
         device,
