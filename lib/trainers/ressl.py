@@ -61,7 +61,7 @@ class Trainer:
 
         criterion = helpers.create_from_config(criterion_config)
 
-        _logger.info(model)
+        # _logger.info(model)
         _logger.info(len(train_loader))
 
         state = State(
@@ -80,8 +80,8 @@ class Trainer:
         self.summary_writer = summary_writer
         self.args = args
 
-        for ep in state.epoch_wrapper(max_epochs):
-            self.train(state, train_loader, ep)
+        for _ in state.epoch_wrapper(max_epochs):
+            self.train(state, train_loader)
 
             save_checkpoint(state.state_dict(),
                             args.experiment_dir)
@@ -92,12 +92,12 @@ class Trainer:
             if args.debug:
                 break
 
-    def train(self, state: State, loader: DataLoader, ep:int):
+    def train(self, state: State, loader: DataLoader):
         meters = DynamicAverageMeterGroup()
         state.train()
 
         for batch, batch_size in state.iter_wrapper(loader):
-            adjust_learning_rate(state, self.args, epoch=ep)
+            adjust_learning_rate(state, self.max_epochs)
             loss = forward_model(state, batch, batch_size, meters)
             state.optimizer.zero_grad()
             loss.backward()
@@ -139,10 +139,9 @@ def forward_model(state: State, batch: Tuple[Tensor, Tensor], batch_size: int, m
 
     return loss
 
-def adjust_learning_rate(state:State, args, warm_up=5):
+def adjust_learning_rate(state:State,  epochs, warm_up=5):
     base_lr = helpers.optimizer.get_learning_rate_from_optimizer(state.optimizer)
     iteration_per_epoch = state.epoch_length
-    epochs = args.max_epochs
 
     T = state.epoch * iteration_per_epoch + state.batch_idx
     warmup_iters = warm_up * iteration_per_epoch
