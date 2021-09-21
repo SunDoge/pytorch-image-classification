@@ -22,6 +22,8 @@ class BackBone(nn.Module):
     def __init__(self, backbone: nn.Module, dim_in: int = 512, hidden_dim=4096, dim=512):
         super().__init__()
         self.net = backbone
+        self.net.fc = nn.Identity()
+
         self.head = ProjectionHead(
             dim_in=dim_in, hidden_dim=hidden_dim, dim_out=dim)
 
