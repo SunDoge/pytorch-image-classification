@@ -8,7 +8,7 @@ local trans = import './transforms/cifar.libsonnet';
 {
   local root = self,
   // main_worker: 'lib.engines.supervised_engine.Engine',
-  _name: 'lib.trainers.supervised.Trainer',
+  _name: 'lib.trainers.supervised.main_worker',
   args: '$args',
   max_epochs: 200,
   print_freq: 10,

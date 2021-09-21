@@ -15,6 +15,7 @@ import torch
 from flame.pytorch.metrics.functional import topk_accuracy
 from flame.next_version.helpers.tensorboard import Rank0SummaryWriter
 from flame.next_version.helpers.checkpoint_saver import save_checkpoint
+from dataclasses import dataclass
 
 _logger = logging.getLogger(__name__)
 
@@ -52,61 +53,48 @@ class State(BaseState):
 
 class Trainer:
 
+    # def __init__(
+    #     self,
+    #     state: State,
+    #     args: Args,
+    #     summary_writer: Rank0SummaryWriter,
+    #     train_loader: DataLoader,
+    #     val_loader: DataLoader,
+    #     print_freq: int,
+    #     max_epochs: int,
+    # ) -> None:
+
+    #     # 全局变量
+    #     self.print_freq = print_freq
+    #     self.max_epochs = max_epochs
+    #     self.summary_writer = summary_writer
+    #     self.args = args
+    #     self.state = state
+    #     self.train_loader = train_loader
+
     def __init__(
         self,
         args: Args,
-        train_config: dict,
-        val_config: dict,
-        max_epochs: int,
-        model_config: dict,
-        optimizer_config: dict,
+        summary_writer: Rank0SummaryWriter,
+        train_loader: DataLoader,
+        val_loader: DataLoader,
         print_freq: int,
-        criterion_config: dict,
-        scheduler_config: dict,
+        max_epochs: int,
     ) -> None:
-        train_loader: DataLoader = helpers.create_data_loader_from_config(
-            train_config
-        )
-        val_loader = helpers.create_data_loader_from_config(
-            val_config
-        )
-        model: nn.Module = helpers.create_model_from_config(
-            model_config
-        )
-        optimizer: torch.optim.SGD = helpers.create_optimizer_from_config(
-            optimizer_config, model.parameters()
-        )
-        scheduler: torch.optim.lr_scheduler.MultiStepLR = helpers.create_scheduler_from_config(
-            scheduler_config, optimizer
-        )
-        criterion: torch.nn.CrossEntropyLoss = helpers.create_from_config(
-            criterion_config
-        )
-        _logger.info(len(train_loader))
-        _logger.info(len(val_loader))
-
-        state = State(
-            model,
-            optimizer,
-            scheduler,
-            torch.device('cuda' if torch.cuda.is_available() else 'cpu'),
-            criterion
-        )
-        summary_writer = Rank0SummaryWriter(
-            log_dir=args.experiment_dir
-        )
-
-        # 全局变量
+        self.args = args
+        self.summary_writer = summary_writer
+        self.train_loader = train_loader
+        self.val_loader = val_loader
         self.print_freq = print_freq
         self.max_epochs = max_epochs
-        self.summary_writer = summary_writer
-        self.args = args
 
-        for _ in state.epoch_wrapper(max_epochs):
-            self.train(state, train_loader)
-            self.validate(state, val_loader)
+    def run(self, state: State):
 
-            scheduler.step()
+        for _ in state.epoch_wrapper(self.max_epochs):
+            self.train(state, self.train_loader)
+            self.validate(state, self.val_loader)
+
+            state.scheduler.step()
 
             best_acc1 = state.metrics.get('best_acc1', 0.)
             acc1 = state.metrics['acc1']
@@ -114,13 +102,16 @@ class Trainer:
             if is_best:
                 state.metrics['best_acc1'] = acc1
 
-            save_checkpoint(state.state_dict(),
-                            args.experiment_dir, is_best=is_best)
+            save_checkpoint(
+                state.state_dict(),
+                self.args.experiment_dir,
+                is_best=is_best
+            )
 
             _logger.info(state.metrics)
             _logger.info(state.epoch_eta)
 
-            if args.debug:
+            if self.args.debug:
                 break
 
     def train(self, state: State, loader: DataLoader):
@@ -195,72 +186,47 @@ def main_worker(
     model_config: dict,
     optimizer_config: dict,
     print_freq: int,
+    criterion_config: dict,
+    scheduler_config: dict,
 ):
-    train_loader = helpers.create_data_loader_from_config(
+    train_loader: DataLoader = helpers.create_data_loader_from_config(
         train_config
     )
     val_loader = helpers.create_data_loader_from_config(
         val_config
     )
-    model = helpers.create_model_from_config(
+    model: nn.Module = helpers.create_model_from_config(
         model_config
     )
-    optimizer = helpers.create_optimizer_from_config(
+    optimizer: torch.optim.SGD = helpers.create_optimizer_from_config(
         optimizer_config, model.parameters()
     )
-    criterion = torch.nn.CrossEntropyLoss()
-
+    scheduler: torch.optim.lr_scheduler.MultiStepLR = helpers.create_scheduler_from_config(
+        scheduler_config, optimizer
+    )
+    criterion: torch.nn.CrossEntropyLoss = helpers.create_from_config(
+        criterion_config
+    )
+    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     state = State(
         model,
         optimizer,
-        torch.device('cuda' if torch.cuda.is_available() else 'cpu'),
+        scheduler,
+        device,
         criterion
     )
     summary_writer = Rank0SummaryWriter(
         log_dir=args.experiment_dir
     )
-
-    for _ in state.epoch_wrapper(max_epochs):
-        train(state, train_loader, print_freq)
-        validate(state, val_loader, print_freq)
-        _logger.info(state.epoch_eta)
-
-        if args.debug:
-            break
-
-
-def train(state: State, loader, print_freq: int):
-    meters = DynamicAverageMeterGroup()
-    state.train()
-    loader.sampler.set_epoch(state.epoch)
-    for batch, batch_size in state.iter_wrapper(loader):
-
-        loss = forward_model(state, batch, batch_size, meters)
-        state.optimizer.zero_grad()
-        loss.backward()
-        state.optimizer.step()
-
-        if state.every_n_iters(n=print_freq):
-            _logger.info(
-                f'Train {state.iter_eta}\t{meters}'
-            )
-
-
-@torch.no_grad()
-def validate(state: State, loader, print_freq: int):
-    meters = DynamicAverageMeterGroup()
-    state.eval()
-    for batch, batch_size in state.iter_wrapper(loader):
-
-        loss = forward_model(state, batch, batch_size, meters)
-
-        if state.every_n_iters(n=print_freq):
-            _logger.info(
-                f'Val {state.iter_eta}\t{meters}'
-            )
-
-    meters.sync()
-    return meters['acc1'].avg
+    trainer = Trainer(
+        args,
+        summary_writer,
+        train_loader,
+        val_loader,
+        print_freq,
+        max_epochs
+    )
+    trainer.run(state)
 
 
 def forward_model(state: State, batch: Tuple[Tensor, Tensor], batch_size: int, meters: DynamicAverageMeterGroup):
