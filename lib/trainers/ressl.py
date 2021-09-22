@@ -39,6 +39,29 @@ class State(BaseState):
     def get_batch_size(self, batch) -> int:
         return batch[1].size(0)
 
+    def adjust_learning_rate(self, base_lr: float, max_epochs: int):
+        adjust_learning_rate(
+            self.optimizer,
+            self.epoch,
+            base_lr,
+            self.batch_idx,
+            self.epoch_length,
+            max_epochs,
+            warm_up=5,
+        )
+
+
+def main_worker(
+    args: Args,
+    train_config: dict,
+    max_epochs: int,
+    model_config: dict,
+    optimizer_config: dict,
+    print_freq: int,
+    criterion_config: dict,
+):
+    pass
+
 
 class Trainer:
 
@@ -117,7 +140,7 @@ class Trainer:
         state.train()
 
         for batch, batch_size in state.iter_wrapper(loader):
-            adjust_learning_rate_by_state(state, self.base_lr, self.max_epochs)
+            state.adjust_learning_rate(self.base_lr, self.max_epochs)
 
             loss = forward_model(state, batch, batch_size, meters)
             state.optimizer.zero_grad()
@@ -164,19 +187,6 @@ def forward_model(state: State, batch: Tuple[List[Tensor], Tensor], batch_size: 
     meters.update('loss', loss.item(), n=batch_size)
 
     return loss
-
-
-def adjust_learning_rate_by_state(state: State, base_lr: float, max_epochs: int):
-    adjust_learning_rate(
-        state.optimizer,
-        state.epoch,
-        base_lr,
-        state.batch_idx,
-        state.epoch_length,
-        max_epochs,
-        warm_up=5,
-    )
-    # lr = helpers.optimizer.get_learning_rate_from_optimizer(state.optimizer)
 
 
 def adjust_learning_rate(optimizer: Optimizer, epoch, base_lr, i, iteration_per_epoch, max_epochs: int, warm_up: int = 5):

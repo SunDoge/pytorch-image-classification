@@ -40,7 +40,6 @@ local optimizers = import './optimizers.libsonnet';
       num_workers: 4,
       batch_size: root.batch_size,
       drop_last: true,
-      // persistent_workers: false,
     },
   },
 
