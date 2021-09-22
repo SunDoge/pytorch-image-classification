@@ -109,13 +109,13 @@ def load_weights(base_model: nn.Module, state_dict: dict):
     new_state_dict = {}
     if state_trie.has_subtrie(prefix):
         for key, value in state_trie.items(prefix=prefix):
-            new_key = key[prefix:]
+            new_key = key[len(prefix):]
             new_state_dict[new_key] = value
 
     if isinstance(base_model, LinearHead):
-        base_model.net.load_state_dict(new_state_dict)
+        base_model.net.load_state_dict(new_state_dict, strict=False)
     else:
-        base_model.load_state_dict(new_state_dict)
+        base_model.load_state_dict(new_state_dict, strict=False)
 
 
 def state_dict_to_cpu(state_dict: Dict[str, Tensor]) -> dict:
