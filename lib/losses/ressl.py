@@ -21,10 +21,12 @@ class ResslLossV2(nn.Module):
 
     def __init__(self, T_student: float = 0.1, T_teacher: float = 0.04):
         super().__init__()
-        self.ressl_loss = ResslLoss(T_student=T_student, T_teacher=T_teacher)
+        # self.ressl_loss = ResslLoss(T_student=T_student, T_teacher=T_teacher)
+        self.ressl_loss = nn.KLDivLoss()
 
     def forward(self, logits_q: Tensor, logits_k: Tensor, qk: Tensor) -> Tensor:
         loss1 = self.ressl_loss(logits_q, logits_k)
-        loss2 = 2.0 - 2.0 * qk
-        loss = (loss1 + loss2) / 2.0
+        # loss2 = 2.0 - 2.0 * qk
+        # loss = (loss1 + loss2) / 2.0
+        loss = loss1
         return loss
