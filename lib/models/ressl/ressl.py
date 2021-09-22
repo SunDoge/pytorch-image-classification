@@ -1,5 +1,6 @@
 # Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved
 import torch
+from torch.functional import Tensor
 import torch.nn as nn
 from .backbone import BackBone
 import copy
@@ -71,7 +72,7 @@ class ReSSL(nn.Module):
         self.queue_ptr[0] = ptr
 
     @torch.no_grad()
-    def _batch_shuffle_ddp(self, x):
+    def _batch_shuffle_ddp(self, x: Tensor):
         """
         Batch shuffle, for making use of BatchNorm.
         *** Only support DistributedDataParallel (DDP) model. ***
@@ -84,7 +85,7 @@ class ReSSL(nn.Module):
         num_gpus = batch_size_all // batch_size_this
 
         # random shuffle index
-        idx_shuffle = torch.randperm(batch_size_all).cuda()
+        idx_shuffle = torch.randperm(batch_size_all, device=x.device)
 
         # broadcast to all gpus
         torch.distributed.broadcast(idx_shuffle, src=0)
