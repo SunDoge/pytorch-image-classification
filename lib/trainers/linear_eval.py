@@ -113,9 +113,16 @@ def load_weights(base_model: nn.Module, state_dict: dict):
             new_state_dict[new_key] = value
 
     if isinstance(base_model, LinearHead):
-        base_model.net.load_state_dict(new_state_dict, strict=False)
+        # base_model.net.load_state_dict(new_state_dict, strict=False)
+        load_state_dict_unstrict(base_model.net, new_state_dict)
     else:
-        base_model.load_state_dict(new_state_dict, strict=False)
+        # base_model.load_state_dict(new_state_dict, strict=False)
+        load_state_dict_unstrict(base_model, new_state_dict)
+
+
+def load_state_dict_unstrict(base_model: nn.Module, state_dict: dict):
+    msg = base_model.load_state_dict(state_dict, strict=False)
+    _logger.info('missing keys: %s', msg.missing_keys)
 
 
 def state_dict_to_cpu(state_dict: Dict[str, Tensor]) -> dict:
