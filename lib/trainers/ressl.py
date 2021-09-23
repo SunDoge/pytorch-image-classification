@@ -80,7 +80,8 @@ class Trainer:
             train_config
         )
 
-        model: nn.Module = helpers.create_model_from_config(model_config)
+        model: nn.Module = helpers.create_model_from_config(
+            model_config, find_unused_parameters=True)
 
         param_dict = {}
         for k, v in model.named_parameters():
@@ -112,6 +113,12 @@ class Trainer:
             torch.device('cuda' if torch.cuda.is_available() else 'cpu'),
             criterion
         )
+
+        if args.resume:
+            cp = torch.load(args.resume, map_location='cpu')
+            _logger.info('resume checkpoint from %s', args.resume)
+            state.load_state_dict(cp)
+
         summary_writer = Rank0SummaryWriter(
             log_dir=args.experiment_dir
         )

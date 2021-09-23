@@ -6,7 +6,12 @@ import torch.nn.functional as F
 
 
 def create_projection(input_size: int, hidden_size: int, output_size: int):
-    pass
+    return nn.Sequential(
+        nn.Linear(input_size, hidden_size),
+        nn.BatchNorm1d(hidden_size),
+        nn.ReLU(inplace=True),
+        nn.Linear(hidden_size, output_size)
+    )
 
 
 class Mbyol(nn.Module):
@@ -21,7 +26,10 @@ class Mbyol(nn.Module):
     ):
         super().__init__()
 
-        input_size = online_network.fc.out_features
+        input_size = online_network.fc.in_features
+
+        online_network.fc = nn.Identity()
+        target_network.fc = nn.Identity()
 
         self.online_network = online_network
         self.target_network = target_network
@@ -45,11 +53,11 @@ class Mbyol(nn.Module):
 
         with torch.no_grad():
             self.momentum_update(self.m)
-            k1: Tensor = self.target_projection(view2)
-            k1: Tensor = self.target_projection(k1)
-            k1 = (k1 > 0.).float()
+            k2: Tensor = self.target_network(view2)
+            k2: Tensor = self.target_projection(k2)
+            k2 = (k2 > 0.).float()
 
-        return q1, k1
+        return q1, k2
 
     @staticmethod
     def _momentum_update(source: nn.Module, target: nn.Module, m: float):

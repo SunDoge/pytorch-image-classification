@@ -10,7 +10,7 @@ local optimizers = import './optimizers.libsonnet';
   args: '$args',
 
   max_epochs: 200,
-  print_freq: 50,
+  print_freq: 10,
   learning_rate:: 0.06,
   batch_size:: 256,
 
