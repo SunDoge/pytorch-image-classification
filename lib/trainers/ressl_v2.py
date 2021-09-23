@@ -173,8 +173,8 @@ class Trainer:
         img1 = img1.to(self.device, non_blocking=True)
         img2 = img2.to(self.device, non_blocking=True)
 
-        logitsq, logitsk, qk = state.model(img1, img2)
-        loss: Tensor = state.criterion(logitsq, logitsk, qk)
+        logitsq, logitsk = state.model(img1, img2)
+        loss: Tensor = state.criterion(logitsq, logitsk)
 
         meters.update('loss', loss.item(), n=batch_size)
 

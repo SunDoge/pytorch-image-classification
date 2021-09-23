@@ -10,7 +10,7 @@ local optimizers = import './optimizers.libsonnet';
   args: '$args',
 
   max_epochs: 200,
-  print_freq: 50,
+  print_freq: 10,
   learning_rate:: 0.06,
   batch_size:: 256,
 
@@ -23,7 +23,7 @@ local optimizers = import './optimizers.libsonnet';
     root.learning_rate * root.batch_size / 256
   ),
   criterion_config: {
-    _name: 'lib.losses.ressl.ResslLossV2',
+    _name: 'lib.losses.ressl.ResslLoss',
     T_student: 0.1,
     T_teacher: 0.04,
   },
