@@ -1,4 +1,8 @@
 __pycache__/
 exps/
 data/
+<<<<<<< HEAD
+=======
+.DS_Store
+>>>>>>> c3d536dc6952e68e24f86f93b0d2c6c9e7d60f7d
 .vscode/

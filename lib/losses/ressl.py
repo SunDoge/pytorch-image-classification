@@ -5,7 +5,7 @@ import torch
 
 class ResslLoss(nn.Module):
 
-    def __init__(self, T_student: float = 0.04, T_teacher: float = 0.1):
+    def __init__(self, T_student: float = 0.1, T_teacher: float = 0.04):
         super().__init__()
         self.T_student = T_student
         self.T_teacher = T_teacher
@@ -15,3 +15,24 @@ class ResslLoss(nn.Module):
         loss = - torch.sum(F.softmax(logits_k.detach() / self.T_teacher, dim=1)
                            * F.log_softmax(logits_q / self.T_student, dim=1), dim=1).mean()
         return loss
+
+
+class ResslLossV2(nn.Module):
+
+    def __init__(self, T_student: float = 0.1, T_teacher: float = 0.04):
+        super().__init__()
+        # self.ressl_loss = ResslLoss(T_student=T_student, T_teacher=T_teacher)
+        self.T_teacher = T_teacher
+        self.T_student = T_student
+        self.ressl_loss = nn.KLDivLoss()
+
+    def forward(self, logits_q: Tensor, logits_k: Tensor, qk: Tensor) -> Tensor:
+        loss1 = self.ressl_loss(
+            F.log_softmax(logits_q / self.T_student, dim=1),
+            F.softmax(logits_k / self.T_teacher, dim=1)
+        )
+        # loss2 = 2.0 - 2.0 * qk
+        # loss = (loss1 + loss2) / 2.0
+        loss = loss1
+        return loss
+

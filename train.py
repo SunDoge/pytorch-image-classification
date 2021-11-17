@@ -14,6 +14,9 @@ class Args(BaseArgs):
     pretrained: Optional[str] = ta.add_argument(
         '-p', '--pretrained', help='pretrained checkpoint'
     )
+    resume: Optional[str] = ta.add_argument(
+        '-r', '--resume', help='恢复训练'
+    )
 
 
 def main_worker(args: Args):

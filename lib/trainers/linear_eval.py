@@ -105,12 +105,22 @@ def main_worker(
 def load_weights(base_model: nn.Module, state_dict: dict):
     state_trie = CharTrie(state_dict)
 
-    prefix = 'module.encoder_q.net.'
+    ressl_prefix = 'module.encoder_q.net.'
+    mbyol_prefix = 'module.online_network.'
+    prefix = ''
     new_state_dict = {}
-    if state_trie.has_subtrie(prefix):
-        for key, value in state_trie.items(prefix=prefix):
-            new_key = key[len(prefix):]
-            new_state_dict[new_key] = value
+    if state_trie.has_subtrie(ressl_prefix):
+        prefix = ressl_prefix
+    elif state_trie.has_subtrie(mbyol_prefix):
+        prefix = mbyol_prefix
+    else:
+        raise Exception()
+
+    _logger.info('prefix=%s', prefix)
+    
+    for key, value in state_trie.items(prefix=prefix):
+        new_key = key[len(prefix):]
+        new_state_dict[new_key] = value
 
     if isinstance(base_model, LinearHead):
         # base_model.net.load_state_dict(new_state_dict, strict=False)
