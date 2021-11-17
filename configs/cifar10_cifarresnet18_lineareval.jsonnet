@@ -12,7 +12,7 @@ local trans = import './transforms/cifar.libsonnet';
   args: '$args',
   max_epochs: 100,
   print_freq: 10,
-  learning_rate:: 30.0,
+  learning_rate:: 0.3,
   batch_size:: 256,
 
   model_config: models.cifar_resnet(),

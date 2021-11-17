@@ -3,18 +3,18 @@ from typing import Iterable, Tuple
 from torch import Tensor
 from torch.utils.data.dataloader import DataLoader
 from flame.pytorch.meters.average_meter import DynamicAverageMeterGroup
-from flame.next_version import helpers
+from flame import helpers
 from train import Args
 
 import logging
 
 from icecream import ic
-from flame.next_version.state import BaseState
+from flame.state import BaseState
 from torch import nn
 import torch
 from flame.pytorch.metrics.functional import topk_accuracy
-from flame.next_version.helpers.tensorboard import Rank0SummaryWriter
-from flame.next_version.helpers.checkpoint_saver import save_checkpoint
+from flame.helpers.tensorboard import Rank0SummaryWriter
+from flame.helpers.checkpoint_saver import save_checkpoint
 from dataclasses import dataclass
 
 _logger = logging.getLogger(__name__)

@@ -1,7 +1,7 @@
 from typing import Optional
-from flame.next_version.arguments import BaseArgs
+from flame.arguments import BaseArgs
 from dataclasses import dataclass
-from flame.next_version.distributed_training import start_distributed_training
+from flame.distributed_training import start_distributed_training
 from icecream import ic
 import logging
 import typed_args as ta
