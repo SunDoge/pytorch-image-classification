@@ -1,22 +1,12 @@
 from typing import Optional
-from flame.arguments import BaseArgs
 from dataclasses import dataclass
 from flame.distributed_training import start_distributed_training
 from icecream import ic
 import logging
 import typed_args as ta
+from lib.arguments.training_args import Args
 
 _logger = logging.getLogger(__name__)
-
-
-@dataclass
-class Args(BaseArgs):
-    pretrained: Optional[str] = ta.add_argument(
-        '-p', '--pretrained', help='pretrained checkpoint'
-    )
-    resume: Optional[str] = ta.add_argument(
-        '-r', '--resume', help='恢复训练'
-    )
 
 
 def main_worker(args: Args):

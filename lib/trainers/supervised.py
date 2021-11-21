@@ -4,7 +4,7 @@ from torch import Tensor
 from torch.utils.data.dataloader import DataLoader
 from flame.pytorch.meters.average_meter import DynamicAverageMeterGroup
 from flame import helpers
-from train import Args
+from lib.arguments.training_args import Args
 
 import logging
 

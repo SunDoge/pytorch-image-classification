@@ -74,11 +74,11 @@ def make_dataset(root_dir: Path, output_file: Path, max_workers: int = 64):
 def main():
     make_dataset(
         Path('/mnt/cephfs/dataset/FAS/CelebA_Spoof/CelebA_Spoof/Data/train'),
-        Path('data/celeba_proof/train_list.pkl')
+        Path('data/celeba_spoof/train_list.pkl')
     )
     make_dataset(
         Path('/mnt/cephfs/dataset/FAS/CelebA_Spoof/CelebA_Spoof/Data/test'),
-        Path('data/celeba_proof/test_list.pkl')
+        Path('data/celeba_spoof/test_list.pkl')
     )
 
 
