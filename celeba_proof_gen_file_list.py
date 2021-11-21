@@ -8,6 +8,7 @@ from tqdm import tqdm
 from lib.datasets.celeba_spoof import FaceBbox, Sample
 from typing import Optional
 import pickle
+import dataclasses
 
 _memory = joblib.Memory('./cache', compress=True)
 
@@ -60,7 +61,7 @@ def make_dataset(root_dir: Path, output_file: Path, max_workers: int = 64):
                 face_bbox.to_xywh(),
                 1 if 'live' in str(image_path) else 0
             )
-            samples.append(sample)
+            samples.append(dataclasses.asdict(sample))
 
     output_file.parent.mkdir(exist_ok=True, parents=True)
 
