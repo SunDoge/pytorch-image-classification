@@ -12,6 +12,9 @@ import math
 from albumentations import bbox_crop
 import math
 from albumentations.pytorch import ToTensorV2
+import logging
+
+_logger = logging.getLogger(__name__)
 
 
 def read_image(path: str):
@@ -66,7 +69,7 @@ def TrainTransform(size: int = 224):
     ])
 
 
-def ValTransfrom(size: int = 224):
+def ValTransform(size: int = 224):
     return A.Compose([
         A.Resize(size, size),
         A.Normalize(),
@@ -85,8 +88,8 @@ def enlarge_bbox(bbox: List[int], scale: float = 1.1, base_size: float = 224.0) 
     size = max(w, h) * scale
     # return [center_x / base_size, center_y / base_size, size / base_size, size / base_size]
     half = size / 2
-    x1 = center_x - half
-    y1 = center_y - half
+    x1 = max(center_x - half, 0)
+    y1 = max(center_y - half, 0)
     x2 = center_x + half
     y2 = center_y + half
     bbox1 = list(map(round, [x1, y1, x2, y2]))
@@ -103,20 +106,32 @@ class CelebASpoof(Dataset):
     ) -> None:
         super().__init__()
         with open(file_list, 'rb') as f:
+            _logger.info('load file_list from %s', file_list)
             data = pickle.load(f)
 
         self.root = Path(root)
         self.samples: List[Sample] = [Sample(**d) for d in data]
         self.transform = transform
 
+        _logger.info('length: %s', len(self.samples))
+
+    def __len__(self):
+        return len(self.samples)
+
     def __getitem__(self, index: int):
+        # print('index', index)
         sample = self.samples[index]
         image = read_image(str(self.root / sample.image_path))
         label = sample.label
         bbox = enlarge_bbox(sample.bbox)
         x1, y1, x2, y2 = bbox
+        
         # [h, w, c]
-        image1 = image[y1:y2, x1:x2]
+        image1 = image[x1:x2, y1:y2]
+        if any([x == 0 for x in image1.shape]):
+            print(sample, image.shape, bbox)
+
+        # print(sample, image1.shape, bbox)
 
         image2 = self.transform(image=image1)['image']
 
@@ -126,9 +141,12 @@ class CelebASpoof(Dataset):
 if __name__ == '__main__':
     ds = CelebASpoof(
         '/mnt/cephfs/dataset/FAS/CelebA_Spoof/CelebA_Spoof/Data/train',
-        'data/celeba_proof/train_list.pkl',
+        'data/celeba_spoof/train_list.pkl',
         TrainTransform(),
     )
-    image, label = ds[0]
+    image, label = ds[1]
     print(image.shape)
     print(label)
+
+    for index, (image, label) in enumerate(ds):
+        print(index, image.shape, label)
